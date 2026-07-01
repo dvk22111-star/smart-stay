@@ -1,4 +1,3 @@
-#הרשאות
 import enum
 
 from sqlalchemy import (
@@ -17,12 +16,11 @@ class PermissionTypeEnum(enum.Enum):
 
 
 class Permission(Base):
-    __tablename__ = "permission"
+    __tablename__ = "permissions"
 
     AuthorizationID = Column(
         Integer,
-        primary_key=True,
-        autoincrement=True
+        primary_key=True
     )
 
     AuthorizationType = Column(

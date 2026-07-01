@@ -1,18 +1,47 @@
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
 
-from repositories.hotel_preferences_repository import HotelPreferencesRepository
-from models.hotel_preferences import HotelPreferences
+from models import HotelPreferences
+from services.repository.hotel_preferences_repository import HotelPreferencesRepository
+
 
 class HotelPreferencesService:
-    def __init__(self, repo: HotelPreferencesRepository):
-        self.repo = repo
+    def get_all(self, db: Session):
+        return HotelPreferencesRepository(db).get_all()
 
-    def create_hotel_preference(self, hotel_id, preference_id, price):
-        hotel_pref = HotelPreferences(
-            hotel_id=hotel_id,
-            preference_id=preference_id,
-            price=price
+    def get_by_id(self, db: Session, hotel_pref_id: int):
+        item = HotelPreferencesRepository(db).get_by_id(hotel_pref_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="Hotel preference not found")
+        return item
+
+    def by_hotel(self, db: Session, hotel_id: int):
+        return HotelPreferencesRepository(db).get_by_hotel_id(hotel_id)
+
+    def create(self, db: Session, payload):
+        item = HotelPreferences(
+            HotelID=payload.HotelID,
+            PreferenceID=payload.PreferenceID,
+            Price=payload.Price,
         )
-        return self.repo.add(hotel_pref)
+        return HotelPreferencesRepository(db).create(item)
 
-    def get_all_hotel_preferences(self):
-        return self.repo.list_all()
+    def update(self, db: Session, hotel_pref_id: int, payload):
+        repo = HotelPreferencesRepository(db)
+        item = repo.get_by_id(hotel_pref_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="Hotel preference not found")
+        if payload.Price is not None:
+            item.Price = payload.Price
+        return repo.update(item)
+
+    def delete(self, db: Session, hotel_pref_id: int):
+        repo = HotelPreferencesRepository(db)
+        item = repo.get_by_id(hotel_pref_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="Hotel preference not found")
+        repo.delete(item)
+        return {"deleted": True}
+
+
+hp_service = HotelPreferencesService()

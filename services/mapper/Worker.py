@@ -1,33 +1,64 @@
-from models.book import Book
-from exceptions.exceptions import BookAlreadyExistsException, MissingTitleException, BookNotFoundException
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
 
-class BookService:
-    def __init__(self, repo):
-        self.repo = repo
+from models import Worker
+from services.repository.worker_repository import WorkerRepository
 
-    def add_book(self, dto):
-        if not dto.title:
-            raise MissingTitleException()
-        if self.repo.exists_by_title(dto.title):
-            raise BookAlreadyExistsException(dto.title)
-        self.repo.add(Book(title=dto.title, author=dto.author, year=dto.year))
 
-    def get_all_books(self):
-        return self.repo.get_all()
+class WorkerService:
+    def get_all(self, db: Session):
+        return WorkerRepository(db).get_all()
 
-    def get_book_by_id(self, book_id):
-        book = self.repo.get_by_id(book_id)
-        if not book:
-            raise BookNotFoundException(book_id)
-        return book
+    def get_by_id(self, db: Session, worker_id: int):
+        item = WorkerRepository(db).get_by_id(worker_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="Worker not found")
+        return item
 
-    def update_book(self, book_id, dto):
-        book = self.repo.update(book_id, Book(title=dto.title, author=dto.author, year=dto.year))
-        if not book:
-            raise BookNotFoundException(book_id)
-        return book
+    def get_by_email(self, db: Session, email: str):
+        item = WorkerRepository(db).get_by_email(email)
+        if not item:
+            raise HTTPException(status_code=404, detail="Worker not found")
+        return item
 
-    def delete_book(self, book_id):
-        book = self.repo.delete(book_id)
-        if not book:
-            raise BookNotFoundException(book_id)
+    def get_by_phone(self, db: Session, phone: str):
+        item = WorkerRepository(db).get_by_phone(phone)
+        if not item:
+            raise HTTPException(status_code=404, detail="Worker not found")
+        return item
+
+    def by_authorization(self, db: Session, auth_id: int):
+        return WorkerRepository(db).get_by_authorization(auth_id)
+
+    def create(self, db: Session, payload):
+        item = Worker(
+            Name=payload.Name,
+            PhoneNumber=payload.PhoneNumber,
+            Email=payload.Email,
+            Permissions=payload.Permissions,
+        )
+        return WorkerRepository(db).create(item)
+
+    def update(self, db: Session, worker_id: int, payload):
+        repo = WorkerRepository(db)
+        item = repo.get_by_id(worker_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="Worker not found")
+        if payload.PhoneNumber is not None:
+            item.PhoneNumber = payload.PhoneNumber
+        if payload.Email is not None:
+            item.Email = payload.Email
+        if payload.Permissions is not None:
+            item.Permissions = payload.Permissions
+        return repo.update(item)
+
+    def delete(self, db: Session, worker_id: int):
+        repo = WorkerRepository(db)
+        item = repo.get_by_id(worker_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="Worker not found")
+        repo.delete(item)
+        return {"deleted": True}
+
+
+worker_service = WorkerService()

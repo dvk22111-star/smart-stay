@@ -1,8 +1,7 @@
-#נופש ללקוח
 from sqlalchemy import (
     Column,
     Integer,
-    DateTime,
+    Date,
     ForeignKey
 )
 
@@ -16,8 +15,7 @@ class VacationersCustomers(Base):
 
     VacationIDForCustomers = Column(
         Integer,
-        primary_key=True,
-        autoincrement=True
+        primary_key=True
     )
 
     UserID = Column(
@@ -33,7 +31,7 @@ class VacationersCustomers(Base):
     )
 
     UpdateDate = Column(
-        DateTime,
+        Date,
         nullable=False
     )
 

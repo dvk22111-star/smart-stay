@@ -1,33 +1,24 @@
-#העדפות
 import enum
 
-from sqlalchemy import (
-    Column,
-    Integer,
-    Enum
-)
+from sqlalchemy import Column, Integer, Enum
+from sqlalchemy.orm import relationship
 
 from database.base import Base
 
 
 class PreferenceTypeEnum(enum.Enum):
     SEA_VIEW = "SEA_VIEW"
-    QUIET = "QUIET"
-    BALCONY = "BALCONY"
+    LOW_FLOOR = "LOW_FLOOR"
+    HIGH_FLOOR = "HIGH_FLOOR"
+    ACCESSIBILITY = "ACCESSIBILITY"
 
 
 class Preferences(Base):
     __tablename__ = "preferences"
 
-    PreferencesID = Column(
-        Integer,
-        primary_key=True
-    )
+    PreferencesID = Column(Integer, primary_key=True)
 
-    PreferenceType = Column(
-        Enum(PreferenceTypeEnum),
-        nullable=False
-    )
+    PreferenceType = Column(Enum(PreferenceTypeEnum), nullable=False)
 
     customer_preferences = relationship(
         "CustomerPreferences",
@@ -43,3 +34,5 @@ class Preferences(Base):
         "RoomPreferences",
         back_populates="preference"
     )
+
+    

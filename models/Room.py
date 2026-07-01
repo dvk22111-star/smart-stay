@@ -1,5 +1,5 @@
 #חדר
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 
 from database.base import Base
@@ -20,6 +20,7 @@ class Room(Base):
     )
 
     NumberOfBeds = Column(Integer, nullable=False)
+    Accessible = Column(Boolean, default=False)
 
     hotel = relationship(
         "Hotel",
