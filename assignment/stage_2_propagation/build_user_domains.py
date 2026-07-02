@@ -19,16 +19,6 @@ def build_user_domains(users, rooms, customer_prefs, room_prefs):
                 if p.UserID == user.UserID
             ]
 
-            # If user explicitly requested accessibility, only consider accessible rooms
-            accessibility_requested = any(
-                getattr(p, 'preference', None) and getattr(p.preference, 'PreferenceType', None) == 'ACCESSIBILITY'
-                for p in user_pref
-            )
-
-            if accessibility_requested and not getattr(room, 'Accessible', False):
-                # room not accessible but user needs accessible
-                continue
-
             room_pref = [
                 p for p in room_prefs
                 if p.RoomID == room.RoomID

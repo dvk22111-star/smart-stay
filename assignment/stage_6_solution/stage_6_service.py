@@ -4,6 +4,13 @@ from .placement_saver import save_placements
 from .excel_exporter import export_to_excel
 from .solution_report_builder import build_report
 
+def placement_to_dict(p):
+    return {
+        "PlacementID": p.PlacementID,
+        "RoomID": p.RoomID,
+        "VacationersCustomersID": p.VacationersCustomersID,
+        "Price": p.Price
+    }
 
 def run_stage_6(
     model_vars,
@@ -30,7 +37,6 @@ def run_stage_6(
         price_lookup,
         vacation_customers
     )
-
     # 3️⃣ שמירה למסד
 
     save_placements(
@@ -54,6 +60,6 @@ def run_stage_6(
 
     return {
         "assignments": assignments,
-        "placements": placements,
+        "placements": [placement_to_dict(p) for p in placements],
         "report": report
     }

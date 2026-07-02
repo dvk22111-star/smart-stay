@@ -4,7 +4,6 @@ from sqlalchemy import (
     Integer,
     ForeignKey
 )
-from sqlalchemy import Float, Boolean
 
 from sqlalchemy.orm import relationship
 
@@ -34,17 +33,6 @@ class CustomerPreferences(Base):
     VacationID = Column(
         Integer,
         ForeignKey("vacations.VacationID")
-    )
-
-    # If the preference includes a paid surcharge (e.g., sea view), record it here
-    ExtraCharge = Column(
-        Float,
-        nullable=True
-    )
-
-    SurchargeAccepted = Column(
-        Boolean,
-        default=False
     )
 
     user = relationship(

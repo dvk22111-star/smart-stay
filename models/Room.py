@@ -20,7 +20,6 @@ class Room(Base):
     )
 
     NumberOfBeds = Column(Integer, nullable=False)
-    Accessible = Column(Boolean, default=False)
 
     hotel = relationship(
         "Hotel",

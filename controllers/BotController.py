@@ -15,7 +15,6 @@ from bot.flow import next_question, get_question, handle_answer
 from bot.validation import is_valid_email
 from services.repository.hotel_repository import HotelRepository
 from bot.parser import parse_yes_no, detect_inquiry
-from bot.parser import parse_accessibility
 
 router = APIRouter(prefix="/bot", tags=["Bot"])
 
@@ -199,14 +198,6 @@ def add_answer(session_id: int, payload: BotAnswerCreateDTO, db: Session = Depen
 
     if parsed_value is not None:
         bot_processor_service.process_answer(db, session, payload.QuestionID, parsed_value)
-    # If the answer was accessibility question, ensure it's processed and enforced later
-    if payload.QuestionID == "QUESTION_ACCESSIBILITY":
-        acc = parse_accessibility(payload.AnswerText)
-        if acc is None:
-            raise HTTPException(status_code=400, detail="לא הצלחתי להבין את תשובת הנגישות. כתבי 'כן' או 'לא'.")
-        saved_answer.set_parsed_value(acc)
-        bot_answer_service.update(db, saved_answer)
-        bot_processor_service.process_answer(db, session, payload.QuestionID, acc)
     # If user selected SEA_VIEW preference and the vacation hotel is 'גלי צאנז',
     # prepare a dynamic sea-view confirmation question with price.
     next_q = parse_result.get("next_question") or next_question(payload.QuestionID)

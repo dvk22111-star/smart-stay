@@ -8,8 +8,6 @@ class CustomerPreferencesDTO(BaseModel):
     UserID: int
     PreferencesID: int
     VacationID: int
-    ExtraCharge: Optional[float] = None
-    SurchargeAccepted: Optional[bool] = None
 
 
 class CustomerPreferencesCreateDTO(BaseModel):
@@ -17,8 +15,6 @@ class CustomerPreferencesCreateDTO(BaseModel):
     UserID: int
     PreferencesID: int
     VacationID: int
-    ExtraCharge: Optional[float] = None
-    SurchargeAccepted: Optional[bool] = None
 
 
 class CustomerPreferencesUpdateDTO(BaseModel):

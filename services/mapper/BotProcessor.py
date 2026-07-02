@@ -14,8 +14,6 @@ class BotProcessorService:
             return self._process_preference_priorities(db, session, parsed_value)
         if question_id == "QUESTION_SEA_VIEW_CONFIRM":
             return self._process_sea_view_confirm(db, session, parsed_value)
-        if question_id == "QUESTION_ACCESSIBILITY":
-            return self._process_accessibility_request(db, session, parsed_value)
         if question_id == "QUESTION_PARTNER_REQUEST":
             return self._process_partner_request(db, session, parsed_value)
         if question_id == "QUESTION_EMAIL":
@@ -89,36 +87,9 @@ class BotProcessorService:
         existing = cp_repo.get_by_user_vacation_preference(user_id, vacation_id, preference.PreferencesID)
         # determine surcharge amount from hotel_preferences if available,
         # fall back to 10% of Vacation.BasicCost when price isn't configured
-        surcharge_amount = None
-        try:
-            from models import HotelPreferences, Vacation
-            vac_rec = db.query(Vacation).filter(Vacation.VacationID == vacation_id).first()
-            if vac_rec and getattr(vac_rec, 'HotelID', None) is not None:
-                hp = db.query(HotelPreferences).filter(
-                    HotelPreferences.HotelID == vac_rec.HotelID,
-                    HotelPreferences.PreferenceID == preference.PreferencesID,
-                ).first()
-            else:
-                hp = None
-
-            if hp and getattr(hp, 'Price', None) is not None:
-                surcharge_amount = round(hp.Price, 2)
-            elif vac_rec and getattr(vac_rec, 'BasicCost', None) is not None:
-                try:
-                    surcharge_amount = round(float(vac_rec.BasicCost) * 0.10, 2)
-                except Exception:
-                    surcharge_amount = None
-        except Exception:
-            hp = None
-            surcharge_amount = None
-
-        # Note: earlier controller computed the surcharge and asked user; here we accept 'accepted' and
-        # set ExtraCharge on the preference to whatever HotelPreferences.Price is, if available.
         if accepted:
             if existing:
-                existing.SurchargeAccepted = True
-                if surcharge_amount is not None:
-                    existing.ExtraCharge = surcharge_amount
+                existing.Rating = 1
                 cp_repo.update(existing)
                 return existing
             customer_pref = CustomerPreferences(
@@ -126,10 +97,7 @@ class BotProcessorService:
                 UserID=user_id,
                 PreferencesID=preference.PreferencesID,
                 VacationID=vacation_id,
-                SurchargeAccepted=True,
             )
-            if surcharge_amount is not None:
-                customer_pref.ExtraCharge = surcharge_amount
             return cp_repo.create(customer_pref)
         else:
             if existing:
@@ -167,44 +135,6 @@ class BotProcessorService:
         user.Email = email
         return user_repo.update(user)
 
-    def _process_accessibility_request(self, db: Session, session, need_accessible: bool):
-        # Persist an accessibility requirement as a customer preference-like record
-        user_id = session.UserID
-        vacation_id = session.VacationID
-        if not user_id or not vacation_id:
-            raise HTTPException(status_code=400, detail="Session missing user or vacation information.")
-
-        # We'll store accessibility as a special CustomerPreferences entry with Preferences.PreferenceType = 'ACCESSIBILITY'
-        from models import Preferences
-        pref = db.query(Preferences).filter(Preferences.PreferenceType == 'ACCESSIBILITY').first()
-        if not pref:
-            try:
-                pref_type = PreferenceTypeEnum['ACCESSIBILITY']
-            except Exception:
-                pref_type = 'ACCESSIBILITY'
-            pref = Preferences(PreferenceType=pref_type)
-            db.add(pref)
-            db.commit()
-            db.refresh(pref)
-        # ensure repository exists
-        cp_repo = CustomerPreferencesRepository(db)
-        existing = cp_repo.get_by_user_vacation_preference(user_id, vacation_id, pref.PreferencesID)
-        if need_accessible:
-            if existing:
-                existing.Rating = 1
-                cp_repo.update(existing)
-                return existing
-            customer_pref = CustomerPreferences(
-                Rating=1,
-                UserID=user_id,
-                PreferencesID=pref.PreferencesID,
-                VacationID=vacation_id,
-            )
-            return cp_repo.create(customer_pref)
-        else:
-            if existing:
-                cp_repo.delete(existing)
-            return None
 
 
 bot_processor_service = BotProcessorService()

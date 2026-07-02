@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from database.dependencies import get_db
 from dtos import HotelDTO, HotelCreateDTO, HotelUpdateDTO
-from services.mapper.Hotel import hotel_service
+from services.mapper.hotel import hotel_service
 
 router = APIRouter(prefix="/hotels", tags=["Hotels"])
 

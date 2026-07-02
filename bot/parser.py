@@ -32,7 +32,7 @@ def parse_yes_no(answer_text: str) -> Optional[bool]:
     if normalized in NO_VALUES:
         return False
 
-    # Allow phrasing like 'כן תודה' or 'לא תודה'
+    # Allow phrasing like 'כן תודה' או 'לא תודה'
     for token in YES_VALUES:
         if token in normalized:
             return True
@@ -41,10 +41,6 @@ def parse_yes_no(answer_text: str) -> Optional[bool]:
             return False
 
     return None
-
-
-def parse_accessibility(answer_text: str) -> Optional[bool]:
-    return parse_yes_no(answer_text)
 
 
 def detect_inquiry(answer_text: str) -> Optional[str]:

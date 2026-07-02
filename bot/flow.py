@@ -18,11 +18,6 @@ QUESTIONS = [
         "type": "preference_priority",
     },
     {
-        "id": "QUESTION_ACCESSIBILITY",
-        "text": "האם את זקוקה לחדר מונגש? (כן/לא) אם כן, זה ייחשב כחובה.",
-        "type": "accessibility",
-    },
-    {
         "id": "QUESTION_SEA_VIEW_CONFIRM",
         "text": "נוף לים זמין בחדר זה בתוספת תשלום. האם תרצי להוסיף את הנוף? (כן/לא)",
         "type": "sea_view_confirm",

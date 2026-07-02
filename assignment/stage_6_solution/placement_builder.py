@@ -29,18 +29,18 @@ def build_placements(
         )
 
         vacationers_customers_id = user_to_vacationers_id.get(user_id)
+
         if vacationers_customers_id is None:
-            raise ValueError(f"No VacationersCustomers record found for user {user_id}")
+            raise ValueError(
+                f"No VacationersCustomers record found for user {user_id}"
+            )
 
         placement = Placement(
             RoomID=room_id,
             VacationersCustomersID=vacationers_customers_id,
-            VacationID=vacation_id,
             Price=price
         )
 
-        placements.append(
-            placement
-        )
+        placements.append(placement)
 
     return placements
