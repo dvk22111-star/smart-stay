@@ -26,6 +26,19 @@ class Stage5OptimizationService:
 
         room_scores = {}
 
+        # בניית דירוג רישום על בסיס תאריך עדכון,
+        # כך שאם אין מקום לכולם יתקבל פתרון שמעדיף משתמשים שנרשמו קודם.
+        registration_order = {
+            vc.UserID: idx
+            for idx, vc in enumerate(
+                sorted(
+                    context.vacation_customers,
+                    key=lambda vc: (vc.UpdateDate, vc.VacationIDForCustomers)#VacationersCustomersID)
+                )
+            )
+        }
+        max_registration_rank = max(registration_order.values(), default=-1)
+
         for user in context.users:
 
             user_preferences = [
@@ -37,6 +50,12 @@ class Stage5OptimizationService:
                 if p.UserID == user.UserID
 
             ]
+
+            registration_bonus = 0
+            if user.UserID in registration_order:
+                registration_bonus = (
+                    max_registration_rank - registration_order[user.UserID]
+                ) * 20
 
             for room in context.rooms:
 
@@ -59,12 +78,13 @@ class Stage5OptimizationService:
                     )
                 )
 
+                # נשתמש ברישום בלבד כשובר שוויון, לא כדי להחליף העדפה.
                 room_scores[
                     (
                         user.UserID,
                         room.RoomID
                     )
-                ] = score
+                ] = score + registration_bonus
 
         self.objective_builder.build(
             context.model,

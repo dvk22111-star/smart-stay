@@ -36,7 +36,8 @@ class Stage2PropagationService:
             users=context.users,
             rooms=context.rooms,
             room_capacities=room_capacities,
-            user_constraints=user_constraints
+            user_constraints=user_constraints,
+            partner_requests=context.partner_requests
         )
 
         # 4️⃣ החזרת Context עם האילוצים שהתווספו

@@ -11,6 +11,9 @@ class BotAnswerService:
     def get_by_session(self, db: Session, session_id: int):
         return BotAnswerRepository(db).get_by_session(session_id)
 
+    def get_latest_by_session_and_question(self, db: Session, session_id: int, question_id: str):
+        return BotAnswerRepository(db).get_latest_by_session_and_question(session_id, question_id)
+
     def update(self, db: Session, answer: BotAnswer):
         return BotAnswerRepository(db).update(answer)
 

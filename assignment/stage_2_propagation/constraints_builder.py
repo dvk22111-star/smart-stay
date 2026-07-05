@@ -15,10 +15,12 @@ class ConstraintsBuilder:
         users: list,
         rooms: list,
         room_capacities: dict,
-        user_constraints: dict
+        user_constraints: dict,
+        partner_requests: list
     ):
 
         # 1️⃣ כל משתמש מקבל בדיוק חדר אחד
+        # לפי ההנחה שאין יותר משתמשים ממיטות, כל המשתמשים חייבים להשתבץ.
         for user in users:
 
             user_vars = [
@@ -61,3 +63,16 @@ class ConstraintsBuilder:
                             (user_id, room.RoomID)
                         ] == 0
                     )
+
+        # 4️⃣ בקשות שותפים: שני משתמשים בבקשת שותפות חייבים לקבל את אותו חדר
+        # או להישאר ללא שיבוץ, כדי לאפשר פתרונות חלקיים.
+        for request in partner_requests:
+            u1 = request.UserIDMember1
+            u2 = request.UserIDMember2
+            if u1 is None or u2 is None:
+                continue
+
+            for room in rooms:
+                model.Add(
+                    variables[(u1, room.RoomID)] == variables[(u2, room.RoomID)]
+                )

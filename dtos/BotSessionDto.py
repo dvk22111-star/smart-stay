@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 class BotAnswerCreateDTO(BaseModel):
-    QuestionID: str
+    QuestionID: Optional[str] = None
     AnswerText: str
     IsFinal: Optional[bool] = False
 

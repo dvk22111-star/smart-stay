@@ -9,6 +9,12 @@ class BotAnswerRepository:
     def get_by_session(self, session_id: int):
         return self.db.query(BotAnswer).filter(BotAnswer.SessionID == session_id).order_by(BotAnswer.CreatedAt).all()
 
+    def get_latest_by_session_and_question(self, session_id: int, question_id: str):
+        return self.db.query(BotAnswer).filter(
+            BotAnswer.SessionID == session_id,
+            BotAnswer.QuestionID == question_id,
+        ).order_by(BotAnswer.CreatedAt.desc()).first()
+
     def create(self, answer: BotAnswer):
         self.db.add(answer)
         self.db.commit()

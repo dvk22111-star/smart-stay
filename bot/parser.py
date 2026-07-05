@@ -102,6 +102,57 @@ def parse_email(answer_text: str) -> Optional[str]:
     return None
 
 
+def parse_group_type(answer_text: str) -> Optional[str]:
+    if not answer_text:
+        return None
+
+    normalized = answer_text.strip().lower()
+    if any(token in normalized for token in ["קבוצה", "group", "כוללני", "כולל"]):
+        return "group"
+    if any(token in normalized for token in ["יחיד", "אישי", "individual", "single"]):
+        return "individual"
+    return None
+
+
+def parse_integer(answer_text: str) -> Optional[int]:
+    if not answer_text:
+        return None
+
+    digits = re.sub(r"[^0-9]", "", answer_text)
+    return int(digits) if digits else None
+
+
+def parse_phone_list(answer_text: str) -> list[str]:
+    if not answer_text:
+        return []
+
+    matches = re.findall(r"[0-9\-\s\(\)]+", answer_text)
+    phones: list[str] = []
+    for item in matches:
+        digits = re.sub(r"\D+", "", item)
+        if len(digits) >= 7:
+            phones.append(digits)
+    if not phones and any(ch.isdigit() for ch in answer_text):
+        digits = re.sub(r"\D+", "", answer_text)
+        if len(digits) >= 7:
+            phones.append(digits)
+    return phones
+
+
+def parse_credit_amount(answer_text: str) -> Optional[float]:
+    if not answer_text:
+        return None
+
+    cleaned = answer_text.replace(",", ".")
+    match = re.search(r"(\d+[\.]?\d*)", cleaned)
+    if match:
+        try:
+            return float(match.group(1))
+        except ValueError:
+            return None
+    return None
+
+
 def parse_preferences_priorities(answer_text: str) -> dict[str, int]:
     if not answer_text:
         return {}
