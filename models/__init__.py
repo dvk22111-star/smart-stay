@@ -12,7 +12,6 @@ from .Vacation import Vacation
 from .Placement import Placement
 from .Hotel import Hotel
 from .Preferences import Preferences, PreferenceTypeEnum
-from .BotRegistrationSession import BotRegistrationSession, BotSessionStatusEnum
-from .BotAnswer import BotAnswer
+# BotRegistrationSession and BotAnswer removed — bot uses in-memory sessions now
 from .Worker import Worker
 from .Permission import Permission

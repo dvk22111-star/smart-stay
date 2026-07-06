@@ -3,9 +3,9 @@ import json
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
+from types import SimpleNamespace
 
 from models import (
-    BotAnswer,
     CustomerPreferences,
     Group,
     GroupMembers,
@@ -42,11 +42,14 @@ class BotProcessorService:
             return self._process_credit_amount(db, session, parsed_value)
         return None
 
-    def _get_latest_answer(self, db: Session, session_id: int, question_id: str):
-        return db.query(BotAnswer).filter(
-            BotAnswer.SessionID == session_id,
-            BotAnswer.QuestionID == question_id,
-        ).order_by(BotAnswer.CreatedAt.desc()).first()
+    def _get_latest_answer(self, session, question_id: str):
+        # Look up latest answer in the in-memory session answers list (added by controller)
+        answers = getattr(session, 'answers', None) or (session.get('answers') if isinstance(session, dict) else None)
+        if answers:
+            for a in reversed(answers):
+                if a.get('QuestionID') == question_id:
+                    return SimpleNamespace(ParsedValue=a.get('ParsedValue'), AnswerText=a.get('AnswerText'))
+        return None
 
     def _create_or_update_user(self, db: Session, session, name: str, email: str):
         user_repo = UserRepository(db)
