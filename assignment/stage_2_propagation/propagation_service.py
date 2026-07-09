@@ -33,6 +33,7 @@ class Stage2PropagationService:
         self._constraints_builder.apply(
             model=context.model,
             variables=context.variables,
+            assigned_users=context.assigned_users,
             users=context.users,
             rooms=context.rooms,
             room_capacities=room_capacities,

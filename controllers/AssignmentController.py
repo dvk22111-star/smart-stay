@@ -30,3 +30,18 @@ def get_assignment(vacation_id: int, db: Session = Depends(get_db)):
     """החזרת רשימת השיבוצים עבור `vacation_id`."""
     placements = placement_service.get_by_vacation(db, vacation_id)
     return {"placements": placements}
+
+
+@router.get("/{vacation_id}/report")
+def get_assignment_report(vacation_id: int, db: Session = Depends(get_db)):
+    """החזרת דוח שיבוץ ונתיבי קבצי Excel עבור הנופש."""
+    try:
+        engine = AssignmentEngine(db)
+        report = engine.run(vacation_id=vacation_id)
+        excel_export = report.get("excel_export") if isinstance(report, dict) else None
+        return {
+            "vacation_id": vacation_id,
+            "excel_export": excel_export,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

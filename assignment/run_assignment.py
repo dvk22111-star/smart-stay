@@ -25,6 +25,15 @@ def run():
         count = len(placements) if placements is not None else 0
         print(f"נוצרו {count} שיבוצים")
 
+        if isinstance(result, dict):
+            excel_export = result.get("excel_export")
+            if excel_export:
+                print("Excel export results:")
+                for name, path in excel_export.get("paths", {}).items():
+                    print(f"  {name}: {path}")
+            else:
+                print("No Excel export available.")
+
     finally:
         session.close()
 

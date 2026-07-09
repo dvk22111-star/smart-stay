@@ -31,3 +31,33 @@ class VariablesBuilder:
                 )
 
         return variables
+
+    def build_assigned_users(
+        self,
+        model: cp_model.CpModel,
+        users
+    ):
+
+        assigned = {}
+
+        for user in users:
+            assigned[user.UserID] = model.NewBoolVar(
+                f"user_{user.UserID}_assigned"
+            )
+
+        return assigned
+
+    def build_assigned_users(
+        self,
+        model: cp_model.CpModel,
+        users
+    ):
+
+        assigned = {}
+
+        for user in users:
+            assigned[user.UserID] = model.NewBoolVar(
+                f"user_{user.UserID}_assigned"
+            )
+
+        return assigned

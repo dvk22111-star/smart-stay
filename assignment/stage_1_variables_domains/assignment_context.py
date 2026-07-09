@@ -21,6 +21,9 @@ class AssignmentContext:
     # (UserID, RoomID) -> BoolVar
     variables: dict
 
+    # אינדיקטורים של משתמשים שהוקצו לחדר
+    assigned_users: dict
+
     # העדפות לקוחות
     customer_preferences: list
 

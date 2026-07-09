@@ -25,6 +25,7 @@ class Stage5OptimizationService:
     ):
 
         room_scores = {}
+        assignment_bonus = {}
 
         # בניית דירוג רישום על בסיס תאריך עדכון,
         # כך שאם אין מקום לכולם יתקבל פתרון שמעדיף משתמשים שנרשמו קודם.
@@ -33,40 +34,36 @@ class Stage5OptimizationService:
             for idx, vc in enumerate(
                 sorted(
                     context.vacation_customers,
-                    key=lambda vc: (vc.UpdateDate, vc.VacationIDForCustomers)#VacationersCustomersID)
+                    key=lambda vc: (vc.UpdateDate, vc.VacationIDForCustomers)
                 )
             )
         }
-        max_registration_rank = max(registration_order.values(), default=-1)
+
+        total_users = len(context.users)
+        base_weight = 10_000_000
 
         for user in context.users:
 
             user_preferences = [
-
                 p
-
                 for p in context.customer_preferences
-
                 if p.UserID == user.UserID
-
             ]
 
             registration_bonus = 0
             if user.UserID in registration_order:
                 registration_bonus = (
-                    max_registration_rank - registration_order[user.UserID]
-                ) * 20
+                    total_users - registration_order[user.UserID]
+                ) * base_weight
+
+            assignment_bonus[user.UserID] = registration_bonus
 
             for room in context.rooms:
 
                 room_preferences = [
-
                     rp.IDPreferences
-
                     for rp in context.room_preferences
-
                     if rp.RoomID == room.RoomID
-
                 ]
 
                 score = (
@@ -78,20 +75,21 @@ class Stage5OptimizationService:
                     )
                 )
 
-                # נשתמש ברישום בלבד כשובר שוויון, לא כדי להחליף העדפה.
                 room_scores[
                     (
                         user.UserID,
                         room.RoomID
                     )
-                ] = score + registration_bonus
+                ] = score
 
         self.objective_builder.build(
             context.model,
             context.variables,
+            context.assigned_users,
             context.users,
             context.rooms,
-            room_scores
+            room_scores,
+            assignment_bonus
         )
 
         return context

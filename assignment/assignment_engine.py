@@ -94,7 +94,8 @@ class AssignmentEngine:
             vacation_id,
             price_lookup,
             total_users,
-            context.vacation_customers
+            context.vacation_customers,
+            context
         )
 
         return result

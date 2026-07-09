@@ -15,12 +15,14 @@ from models import (
     User,
     Vacation,
     VacationersCustomers,
+    Room,
+    RoomPreferences
 )
 from services.repository.customer_preferences_repository import CustomerPreferencesRepository
 from services.repository.preferences_repository import PreferencesRepository
 from services.repository.partner_request_repository import PartnerRequestRepository
 from services.repository.user_repository import UserRepository
-
+from bot.temp_user_service import temp_user_service
 
 class BotProcessorService:
     def process_answer(self, db: Session, session, question_id: str, parsed_value):
@@ -51,29 +53,6 @@ class BotProcessorService:
                     return SimpleNamespace(ParsedValue=a.get('ParsedValue'), AnswerText=a.get('AnswerText'))
         return None
 
-    def _create_or_update_user(self, db: Session, session, name: str, email: str):
-        user_repo = UserRepository(db)
-        if session.UserID:
-            user = user_repo.get_by_id(session.UserID)
-            if not user:
-                raise HTTPException(status_code=404, detail="User not found")
-            user.Name = name or user.Name
-            user.Email = email or user.Email
-            return user_repo.update(user)
-
-        existing_user = user_repo.get_by_phone(session.Phone)
-        if existing_user:
-            existing_user.Name = name or existing_user.Name
-            existing_user.Email = email or existing_user.Email
-            session.UserID = existing_user.UserID
-            return user_repo.update(existing_user)
-
-        user = User(Name=name, Email=email, Phone=session.Phone)
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-        session.UserID = user.UserID
-        return user
 
     def _ensure_vacation_customer(self, db: Session, user_id: int, vacation_id: int):
         existing = db.query(VacationersCustomers).filter(
@@ -92,34 +71,49 @@ class BotProcessorService:
         db.refresh(vc)
         return vc
 
-    def _process_name(self, db: Session, session, name: str):
-        if not name or not name.strip():
-            raise HTTPException(status_code=400, detail="אנא הכניס/י שם תקין.")
-        if session.UserID:
-            user = UserRepository(db).get_by_id(session.UserID)
-            if user:
-                user.Name = name.strip()
-                return UserRepository(db).update(user)
-        return None
+    def _process_name(self, db, session, name):
 
+        if not name or not name.strip():
+            raise HTTPException(
+                status_code=400,
+                detail="אנא הכנס שם תקין"
+            )
+
+        temp_user_service.update(
+            str(session.SessionID),
+            "Name",
+            name.strip()
+     )
+
+        return True
     def _process_email(self, db: Session, session, email: str):
         if not email:
-            raise HTTPException(status_code=400, detail="כתובת המייל ריקה.")
+           raise HTTPException(status_code=400, detail="כתובת המייל ריקה.")
 
-        name_answer = self._get_latest_answer(db, session.SessionID, "QUESTION_NAME")
+        name_answer = self._get_latest_answer(
+            session,
+            "QUESTION_NAME",
+    )
+
         name_text = None
+
         if name_answer:
             name_text = name_answer.ParsedValue or name_answer.AnswerText
+
         if not name_text or not name_text.strip():
-            raise HTTPException(status_code=400, detail="לא נמצא שם משתמש תקין. אנא הזין שם קודם.")
+            raise HTTPException(
+                status_code=400,
+                detail="לא נמצא שם משתמש תקין. אנא הזן שם קודם."
+        )
 
-        user = self._create_or_update_user(db, session, name_text.strip(), email.strip())
+        temp_user_service.update(
+            str(session.SessionID),
+            "Email",
+             email.strip()
+            )
 
-        if session.VacationID:
-            self._ensure_vacation_customer(db, user.UserID, session.VacationID)
 
-        return user
-
+        return temp_user_service.get(str(session.SessionID))
     def _process_group_type(self, db: Session, session, parsed_value):
         return parsed_value
 
@@ -129,15 +123,18 @@ class BotProcessorService:
     def _process_group_member_phones(self, db: Session, session, phone_list: list[str]):
         if not phone_list:
             raise HTTPException(status_code=400, detail="אנא ספק/י לפחות מספר טלפון אחד של חברי הקבוצה.")
-        if not session.UserID:
-            raise HTTPException(status_code=400, detail="Session missing user information.")
+        if not temp_user_service.get(str(session.SessionID)):
+            raise HTTPException(
+                status_code=400,
+                detail="Session missing temporary user"
+                )
+           
         if not session.VacationID:
             raise HTTPException(status_code=400, detail="Session missing vacation information.")
 
-        group_name_answer = self._get_latest_answer(db, session.SessionID, "QUESTION_GROUP_NAME")
-        group_size_answer = self._get_latest_answer(db, session.SessionID, "QUESTION_GROUP_SIZE")
-        payment_answer = self._get_latest_answer(db, session.SessionID, "QUESTION_GROUP_PAYMENT_TYPE")
-
+        group_name_answer = self._get_latest_answer(session, "QUESTION_GROUP_NAME")
+        group_size_answer = self._get_latest_answer(session,"QUESTION_GROUP_SIZE",)
+        payment_answer = self._get_latest_answer( session, "QUESTION_GROUP_PAYMENT_TYPE",)
         group_name = (group_name_answer.ParsedValue or group_name_answer.AnswerText).strip() if group_name_answer else None
         group_size = int(group_size_answer.ParsedValue or group_size_answer.AnswerText) if group_size_answer else None
         paid_as_group = payment_answer.ParsedValue if payment_answer else False
@@ -147,42 +144,21 @@ class BotProcessorService:
         if not group_size or group_size < 1:
             raise HTTPException(status_code=400, detail="אנא הזן מספר משתתפים תקין.")
 
-        group = None
-        if session.GroupID:
-            group = db.query(Group).filter(Group.GroupID == session.GroupID).first()
-
-        if not group:
-            group = Group(
-                UserID=session.UserID,
-                GroupName=group_name,
-                NumberofParticipants=group_size,
-                VacationID=session.VacationID,
-                GroupPrice=0.0,
-                IndividualPrice=0.0,
-                PaidAsAGroup=bool(paid_as_group),
-            )
-            db.add(group)
-            db.commit()
-            db.refresh(group)
-            session.GroupID = group.GroupID
-        else:
-            group.GroupName = group_name
-            group.NumberofParticipants = group_size
-            group.PaidAsAGroup = bool(paid_as_group)
-            db.commit()
-            db.refresh(group)
-
-        for phone in phone_list:
-            existing_member = db.query(GroupMembers).filter(
-                GroupMembers.GroupID == group.GroupID,
-                GroupMembers.Telephone == phone,
-            ).first()
-            if not existing_member:
-                member = GroupMembers(GroupID=group.GroupID, Telephone=phone)
-                db.add(member)
-        db.commit()
-
-        return group
+        temp_user_service.update(
+            str(session.SessionID),
+            "Group",
+            {
+            "UserID": None,
+            "GroupName": group_name,
+            "NumberofParticipants": group_size,
+            "VacationID": session.VacationID,
+            "GroupPrice": 0.0,
+            "IndividualPrice": 0.0,
+            "PaidAsAGroup": bool(paid_as_group),
+            "Members": phone_list
+            }
+        )
+        return True
 
     def _process_preference_priorities(self, db: Session, session, priorities: dict):
         if not priorities:
@@ -190,16 +166,21 @@ class BotProcessorService:
         if len(set(priorities.values())) != len(priorities.values()):
             raise HTTPException(status_code=400, detail="כל דירוג יכול להיבחר פעם אחת בלבד.")
 
-        user_id = session.UserID
+       
         vacation_id = session.VacationID
-        if not user_id or not vacation_id:
-            raise HTTPException(status_code=400, detail="Session missing user or vacation information.")
+        data = temp_user_service.get(str(session.SessionID))
+
+        if not data or not vacation_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Session missing user or vacation information."
+            )
 
         vacation = db.query(Vacation).filter(Vacation.VacationID == vacation_id).first()
         if not vacation:
             raise HTTPException(status_code=400, detail="Vacation not found.")
 
-        saved_entries = []
+        
         for pref_key, rating in priorities.items():
             try:
                 pref_type = PreferenceTypeEnum[pref_key]
@@ -219,76 +200,84 @@ class BotProcessorService:
             ).count()
             if room_count == 0:
                 raise HTTPException(status_code=400, detail=f"אין חדרים זמינים עם ההעדפה {pref_key} עבור נופש זה.")
+        temp_user_service.update(
+            str(session.SessionID),
+           "Preferences",
+           priorities
+        )
 
-            existing_pref = db.query(CustomerPreferences).filter(
-                CustomerPreferences.UserID == user_id,
-                CustomerPreferences.VacationID == vacation_id,
-                CustomerPreferences.PreferencesID == preference.PreferencesID,
-            ).first()
-
-            total_selected = db.query(CustomerPreferences).filter(
-                CustomerPreferences.VacationID == vacation_id,
-                CustomerPreferences.PreferencesID == preference.PreferencesID,
-            ).count()
-            if existing_pref:
-                total_selected -= 1
-
-            if total_selected >= room_count:
-                raise HTTPException(status_code=400, detail=f"כבר הושלמה הדרישה להזמנה זו עבור ההעדפה {pref_key}.")
-
-            if existing_pref:
-                existing_pref.Rating = rating
-                db.commit()
-                db.refresh(existing_pref)
-                saved_entries.append(existing_pref)
-            else:
-                customer_pref = CustomerPreferences(
-                    Rating=rating,
-                    UserID=user_id,
-                    PreferencesID=preference.PreferencesID,
-                    VacationID=vacation_id,
-                )
-                db.add(customer_pref)
-                db.commit()
-                db.refresh(customer_pref)
-                saved_entries.append(customer_pref)
-
-        return saved_entries
-
+        return priorities    
     def _process_partner_request(self, db: Session, session, partner_phone: str):
         if partner_phone is None:
             return None
 
-        user_id = session.UserID
+       
+        data = temp_user_service.get(str(session.SessionID))
         vacation_id = session.VacationID
-        if not user_id or not vacation_id:
-            raise HTTPException(status_code=400, detail="Session missing user or vacation information.")
 
-        user_repo = UserRepository(db)
-        partner_user = user_repo.get_by_phone(partner_phone)
-
-        partner_request = PartnerRequest(
-            UserIDMember1=user_id,
-            UserIDMember2=partner_user.UserID if partner_user else None,
-            VacationID=vacation_id,
+        if not data or not vacation_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Session missing user or vacation information."
+            )
+        temp_user_service.update(
+            str(session.SessionID),
+            "PartnerPhone",
+             partner_phone
         )
-        db.add(partner_request)
-        db.commit()
-        db.refresh(partner_request)
-        return partner_request
+
+        return partner_phone
+       
 
     def _process_credit_amount(self, db: Session, session, amount: float):
         if amount is None:
             raise HTTPException(status_code=400, detail="אנא הכנס/י סכום אשראי תקין.")
-        if not session.UserID:
+        if not temp_user_service.get(str(session.SessionID)):
             raise HTTPException(status_code=400, detail="Session missing user information.")
 
-        user = UserRepository(db).get_by_id(session.UserID)
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+        temp_user_service.update(
+            str(session.SessionID),
+            "Credit",
+            amount
+        )
 
-        user.Credit = amount
-        return UserRepository(db).update(user)
+        return temp_user_service.get(str(session.SessionID))
+    def finalize_registration(self, db, session):
+        bot_processor_service = BotProcessorService()
+        data = temp_user_service.get(str(session.SessionID))
+        if not data:
+            raise HTTPException(
+                status_code=400,
+                detail="לא נמצאו נתוני הרשמה."
+            )
+        required_fields = ["Name", "Email", "Phone", "Credit"]
 
+        missing_fields = [
+        field for field in required_fields
+        if field not in data or data[field] is None
+    ]
 
+        if missing_fields:
+            raise HTTPException(
+                status_code=400,
+                detail=f"חסרים נתונים להשלמת ההרשמה: {', '.join(missing_fields)}"
+            )
+        user = User(
+            Name=data["Name"],
+            Email=data["Email"],
+            Phone=data["Phone"],
+            Credit=data["Credit"]
+        )
+
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+        session.UserID = user.UserID
+
+    # יצירת VacationCustomer
+    # יצירת Group
+    # יצירת Preferences
+    # יצירת PartnerRequest
+        return user
 bot_processor_service = BotProcessorService()

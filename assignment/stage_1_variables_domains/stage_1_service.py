@@ -39,6 +39,7 @@ class Stage1VariablesAndDomainsService:
         # 3️⃣ יצירת מודל CP-SAT ומשתני השיבוץ
         model = cp_model.CpModel()
         variables = self._variables_builder.build(model, users, rooms)
+        assigned_users = self._variables_builder.build_assigned_users(model, users)
 
         # 4️⃣ החזרת AssignmentContext מלא
         return AssignmentContext(
@@ -46,6 +47,7 @@ class Stage1VariablesAndDomainsService:
             users=users,
             rooms=rooms,
             variables=variables,
+            assigned_users=assigned_users,
             customer_preferences=customer_preferences,
             room_preferences=room_preferences,
             hotel_preferences=hotel_preferences,

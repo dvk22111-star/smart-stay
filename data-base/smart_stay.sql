@@ -72,6 +72,7 @@ CREATE TABLE groups (
     FOREIGN KEY (UserID) REFERENCES users(UserID),
     FOREIGN KEY (VacationID) REFERENCES vacations(VacationID)
 );
+select * from preferences
 
 -- 8. GroupMembers (FK: groups)
 CREATE TABLE group_members (
@@ -153,6 +154,7 @@ CREATE TABLE partner_requests (
     FOREIGN KEY (UserIDMember2) REFERENCES users(UserID),
     FOREIGN KEY (VacationID) REFERENCES vacations(VacationID)
 );
+select * from hotels
 
 
 -------------
@@ -318,3 +320,4 @@ VALUES
 (123456789, 'Secretary One', '0508000001', 'secretary@test.com', 1),
 (987654321, 'System Manager', '0508000002', 'manager@test.com', 2),
 (111222333, 'Administrator', '0508000003', 'admin@test.com', 3);
+select * from hotels

@@ -4,6 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from database.dependencies import get_db
 from dtos import BotSessionDTO, BotSessionCreateDTO, BotAnswerCreateDTO
 from services.mapper.BotProcessor import bot_processor_service
+from bot.temp_user_service import temp_user_service
 from models import (
     User,
     Group,
@@ -52,6 +53,12 @@ def create_session(payload: BotSessionCreateDTO, db: Session = Depends(get_db)):
         "UpdatedAt": now,
     }
     SESSIONS[session_id] = session
+    temp_user_service.save(
+    str(session_id),
+    {
+        "Phone": payload.Phone
+    }
+)
     return session
 
 
@@ -123,6 +130,8 @@ def verify_phone(session_id: int, db: Session = Depends(get_db)):
 
 @router.post("/sessions/{session_id}/answers")
 def add_answer(session_id: int, payload: BotAnswerCreateDTO, db: Session = Depends(get_db)):
+    print(SESSIONS)
+    print(session_id)
     session = SESSIONS.get(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Bot session not found")

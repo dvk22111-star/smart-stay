@@ -12,6 +12,7 @@ class ConstraintsBuilder:
         self,
         model: cp_model.CpModel,
         variables: dict,
+        assigned_users: dict,
         users: list,
         rooms: list,
         room_capacities: dict,
@@ -28,7 +29,9 @@ class ConstraintsBuilder:
                 for room in rooms
             ]
 
-            model.AddExactlyOne(user_vars)
+            # אפשר שיבוץ חלקי: לכל משתמש מקבלים לכל היותר חדר אחד
+            model.Add(sum(user_vars) <= 1)
+            model.Add(sum(user_vars) == assigned_users[user.UserID])
 
         # 2️⃣ קיבולת חדר
         for room in rooms:

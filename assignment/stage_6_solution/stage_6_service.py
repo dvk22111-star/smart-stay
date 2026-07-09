@@ -19,7 +19,8 @@ def run_stage_6(
     vacation_id,
     price_lookup,
     total_users,
-    vacation_customers
+    vacation_customers,
+    context
 ):
 
     # 1️⃣ חילוץ פתרון
@@ -46,9 +47,14 @@ def run_stage_6(
 
     # 4️⃣ יצוא Excel
 
-    export_to_excel(
+    excel_export_result = export_to_excel(
         assignments,
-        db_session
+        users=context.users,
+        rooms=context.rooms,
+        group_members=context.group_members,
+        customer_preferences=context.customer_preferences,
+        room_preferences=context.room_preferences,
+        filename_prefix=f"vacation_{vacation_id}"
     )
 
     # 5️⃣ דו"ח
@@ -61,5 +67,6 @@ def run_stage_6(
     return {
         "assignments": assignments,
         "placements": [placement_to_dict(p) for p in placements],
-        "report": report
+        "report": report,
+        "excel_export": excel_export_result,
     }

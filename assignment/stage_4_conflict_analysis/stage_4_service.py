@@ -26,17 +26,20 @@ class Stage4Service:
         status
     ) -> dict:
 
-        statistics = (
-            self.statistics_builder.build(
-                solver
-            )
-        )
+        statistics = self.statistics_builder.build(solver)
 
-        report = (
-            self.report_builder.build(
-                status
-            )
-        )
+        # include solver objective metrics when available
+        try:
+            objective_value = solver.ObjectiveValue()
+        except Exception:
+            objective_value = None
+
+        try:
+            best_bound = solver.BestObjectiveBound()
+        except Exception:
+            best_bound = None
+
+        report = self.report_builder.build(status)
 
         infeasible = (
             self.infeasibility_detector
@@ -47,6 +50,8 @@ class Stage4Service:
 
         return {
             "statistics": statistics,
+            "objective_value": objective_value,
+            "best_bound": best_bound,
             "report": report,
             "infeasible": infeasible
         }
