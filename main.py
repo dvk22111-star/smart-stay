@@ -45,6 +45,8 @@ from controllers.PlacementController import router as placements_router
 from controllers.CustomerPreferencesController import router as customer_preferences_router
 from controllers.HotelPreferencesController import router as hotel_preferences_router
 from controllers.RoomPreferencesController import router as room_preferences_router
+from controllers.PreferencePriceController import router as preference_price_router
+from controllers.PriceController import router as price_router
 from controllers.PartnerRequestsController import router as partner_requests_router
 from controllers.BotController import router as bot_router
 from controllers.AdminController import router as admin_router
@@ -137,6 +139,8 @@ app.include_router(assignments_router)
 app.include_router(customer_preferences_router)
 app.include_router(hotel_preferences_router)
 app.include_router(room_preferences_router)
+app.include_router(preference_price_router)
+app.include_router(price_router)
 app.include_router(partner_requests_router)
 app.include_router(bot_router)
 app.include_router(admin_router)

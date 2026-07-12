@@ -11,5 +11,6 @@ from .room_preferences_repository import RoomPreferencesRepository
 from .group_repository import GroupRepository
 from .group_members_repository import GroupMembersRepository
 from .partner_request_repository import PartnerRequestRepository
+from .preference_price_repository import PreferencePriceRepository
 from .worker_repository import WorkerRepository
 from .permission_repository import PermissionRepository

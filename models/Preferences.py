@@ -35,4 +35,9 @@ class Preferences(Base):
         back_populates="preference"
     )
 
+    preference_prices = relationship(
+        "PreferencePrice",
+        back_populates="preference"
+    )
+
     

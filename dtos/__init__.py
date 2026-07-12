@@ -6,6 +6,7 @@ from .GroupDto import *
 from .GroupMembersDto import *
 from .CustomerPreferencesDto import *
 from .HotelPreferencesDto import *
+from .PreferencePriceDto import *
 from .RoomPreferencesDto import *
 from .partnerRequestsDto import *
 from .PreferencesDto import *

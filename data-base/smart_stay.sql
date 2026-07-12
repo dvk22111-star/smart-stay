@@ -6,13 +6,13 @@ create database smart_stay
 GO
 use  smart_stay
 
--- 1. Permissions (ΰιο ϊμειεϊ)
+-- 1. Permissions (οΏ½οΏ½οΏ½ οΏ½οΏ½οΏ½οΏ½οΏ½οΏ½)
 CREATE TABLE permissions (
     AuthorizationID INT PRIMARY KEY IDENTITY(1,1),
     AuthorizationType VARCHAR(50) NOT NULL
 );
 
--- 2. Users (ΰιο ϊμειεϊ)
+-- 2. Users (οΏ½οΏ½οΏ½ οΏ½οΏ½οΏ½οΏ½οΏ½οΏ½)
 CREATE TABLE users (
     UserID INT PRIMARY KEY IDENTITY(1,1),
     Name VARCHAR(255) NOT NULL,
@@ -21,13 +21,13 @@ CREATE TABLE users (
     Credit NUMERIC(10, 2) DEFAULT 0
 );
 
--- 3. Preferences (ΰιο ϊμειεϊ)
+-- 3. Preferences (οΏ½οΏ½οΏ½ οΏ½οΏ½οΏ½οΏ½οΏ½οΏ½)
 CREATE TABLE preferences (
     PreferencesID INT PRIMARY KEY IDENTITY(1,1),
     PreferenceType VARCHAR(50) NOT NULL
 );
 
--- 4. Hotels (ΰιο ϊμειεϊ)
+-- 4. Hotels (οΏ½οΏ½οΏ½ οΏ½οΏ½οΏ½οΏ½οΏ½οΏ½)
 CREATE TABLE hotels (
     HotelID INT PRIMARY KEY IDENTITY(1,1),
     Name VARCHAR(255) NOT NULL,
@@ -104,7 +104,15 @@ CREATE TABLE hotel_preferences (
     FOREIGN KEY (PreferenceID) REFERENCES preferences(PreferencesID)
 );
 
--- 11. RoomPreferences (FK: rooms, preferences)
+-- 11. PreferencePrices (FK: preferences)
+CREATE TABLE preference_prices (
+    PreferencePriceID INT PRIMARY KEY IDENTITY(1,1),
+    PreferenceID INT NOT NULL,
+    AdditionalPrice FLOAT NOT NULL,
+    FOREIGN KEY (PreferenceID) REFERENCES preferences(PreferencesID)
+);
+
+-- 12. RoomPreferences (FK: rooms, preferences)
 CREATE TABLE room_preferences (
     RoomPreferencesID INT PRIMARY KEY IDENTITY(1,1),
     RoomID INT NOT NULL,
