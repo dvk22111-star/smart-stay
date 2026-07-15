@@ -1,0 +1,7 @@
+RoomID	UserID	preference_score	registration_bonus	partner_potential	group_bonus	total_score
+
+ObjectiveBuilder output:
+DEBUG ObjectiveBuilder: variable_terms=0 partner_terms=0
+
+
+Objective built (see above).
