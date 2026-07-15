@@ -7,7 +7,7 @@ class DummyObjectiveBuilder:
     def __init__(self):
         self.received = None
 
-    def build(self, model, variables, assigned_users, users, rooms, room_scores, assignment_bonus):
+    def build(self, model, variables, assigned_users, users, rooms, room_scores, assignment_bonus, group_room_bonus=None, partner_requests=None, **kwargs):
         # store for inspection in tests
         self.received = {
             "model": model,
@@ -17,6 +17,9 @@ class DummyObjectiveBuilder:
             "rooms": rooms,
             "room_scores": room_scores,
             "assignment_bonus": assignment_bonus,
+            "group_room_bonus": group_room_bonus,
+            "partner_requests": partner_requests,
+            **kwargs,
         }
 
 
@@ -57,6 +60,9 @@ def test_registration_bonus_prioritizes_earlier_update_date():
     context.rooms = rooms
     context.customer_preferences = []
     context.room_preferences = []
+    context.groups = []
+    context.group_members = []
+    context.partner_requests = []
     context.model = None
     context.variables = {(u.UserID, r.RoomID): None for u in users for r in rooms}
     context.assigned_users = {}

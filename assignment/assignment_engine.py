@@ -87,6 +87,37 @@ class AssignmentEngine:
         price_lookup = {}
         total_users = len(context.users)
 
+        # בדיקה: האם הפתרון חלקי? נאסוף את סיכום ה-assigned flags
+        try:
+            assigned_count = 0
+            for u in context.users:
+                var = context.assigned_users.get(u.UserID)
+                if var is None:
+                    continue
+                # Value may raise if solver is not available; guard with try
+                try:
+                    if solver.Value(var):
+                        assigned_count += 1
+                except Exception:
+                    assigned_count = None
+                    break
+        except Exception:
+            assigned_count = None
+
+        if assigned_count is not None and assigned_count < total_users:
+            # Do not persist partial placements. Return a diagnostic report.
+            return {
+                "assignments": None,
+                "placements": [],
+                "report": {
+                    "total_users": total_users,
+                    "assigned_users": assigned_count,
+                    "unassigned_users": total_users - assigned_count,
+                    "note": "Partial assignment detected; placements not saved."
+                },
+                "excel_export": None
+            }
+
         result = run_stage_6(
             context.variables,
             solver,

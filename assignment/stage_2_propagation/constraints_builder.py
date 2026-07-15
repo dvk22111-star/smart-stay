@@ -13,6 +13,8 @@ class ConstraintsBuilder:
         model: cp_model.CpModel,
         variables: dict,
         assigned_users: dict,
+        room_used_flags: dict,
+        room_full_flags: dict,
         users: list,
         rooms: list,
         room_capacities: dict,
@@ -20,8 +22,11 @@ class ConstraintsBuilder:
         partner_requests: list
     ):
 
-        # 1️⃣ כל משתמש מקבל בדיוק חדר אחד
-        # לפי ההנחה שאין יותר משתמשים ממיטות, כל המשתמשים חייבים להשתבץ.
+        # 1️⃣ כל משתמש מקבל חדר אחד או אפס בהתאם לקיבולת הכוללת
+        # אם סך כל המיטות מספיק לכל המשתמשים -> נחייב כל משתמש להיות משובץ בדיוק בחדר אחד.
+        total_capacity = sum(room_capacities.values()) if room_capacities else 0
+        require_full_assignment = (total_capacity >= len(users))
+
         for user in users:
 
             user_vars = [
@@ -29,9 +34,16 @@ class ConstraintsBuilder:
                 for room in rooms
             ]
 
-            # אפשר שיבוץ חלקי: לכל משתמש מקבלים לכל היותר חדר אחד
-            model.Add(sum(user_vars) <= 1)
-            model.Add(sum(user_vars) == assigned_users[user.UserID])
+            if require_full_assignment:
+                # Force each user to be assigned to exactly one room
+                model.Add(sum(user_vars) == 1)
+                # Mirror into the assigned_users flag for reporting
+                if user.UserID in assigned_users:
+                    model.Add(assigned_users[user.UserID] == 1)
+            else:
+                # Allow users to be unassigned when capacity is insufficient
+                model.Add(sum(user_vars) <= 1)
+                model.Add(sum(user_vars) == assigned_users[user.UserID])
 
         # 2️⃣ קיבולת חדר
         for room in rooms:
@@ -50,6 +62,18 @@ class ConstraintsBuilder:
                 sum(room_vars) <= capacity
             )
 
+            room_used = room_used_flags.get(room.RoomID) if room_used_flags else None
+            room_full = room_full_flags.get(room.RoomID) if room_full_flags else None
+            if room_used is not None:
+                model.Add(sum(room_vars) >= 1).OnlyEnforceIf(room_used)
+                model.Add(sum(room_vars) == 0).OnlyEnforceIf(room_used.Not())
+            if room_full is not None:
+                if capacity > 0:
+                    model.Add(sum(room_vars) == capacity).OnlyEnforceIf(room_full)
+                    model.Add(sum(room_vars) <= capacity - 1).OnlyEnforceIf(room_full.Not())
+                else:
+                    model.Add(room_full == 0)
+
         # 3️⃣ אילוצי משתמש
         # user_constraints:
         # {
@@ -67,15 +91,7 @@ class ConstraintsBuilder:
                         ] == 0
                     )
 
-        # 4️⃣ בקשות שותפים: שני משתמשים בבקשת שותפות חייבים לקבל את אותו חדר
-        # או להישאר ללא שיבוץ, כדי לאפשר פתרונות חלקיים.
-        for request in partner_requests:
-            u1 = request.UserIDMember1
-            u2 = request.UserIDMember2
-            if u1 is None or u2 is None:
-                continue
-
-            for room in rooms:
-                model.Add(
-                    variables[(u1, room.RoomID)] == variables[(u2, room.RoomID)]
-                )
+        # 4️⃣ בקשות שותפים: אינן נאכפות כאן כ-Hard constraints.
+        # בקשות השותפים יחוזקו בשלב האופטימיזציה בלבד,
+        # אך לא יגרמו לידי פתרון חסר או בלתי אפשרי.
+        pass

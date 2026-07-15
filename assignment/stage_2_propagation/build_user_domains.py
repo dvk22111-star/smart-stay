@@ -21,15 +21,10 @@ def build_user_domains(users, rooms, customer_prefs, room_prefs):
         # Start with rooms that have at least one bed
         candidate_rooms = [room.RoomID for room in rooms if getattr(room, 'NumberOfBeds', 1) >= 1]
 
-        # If user has explicit preferences, intersect candidate rooms with those matching any preference
-        prefs = user_pref_map.get(user.UserID)
-        if prefs:
-            matching = set()
-            for p in prefs:
-                matching |= pref_to_room_ids.get(p, set())
-            # if matching set is non-empty, prefer that reduced set
-            if matching:
-                candidate_rooms = [r for r in candidate_rooms if r in matching]
+        # Do NOT reduce domains based on preferences.
+        # Preferences are soft and accounted for in Stage 5 optimization.
+        # Keep the full set of candidate rooms (rooms with at least one bed)
+        # so the solver can use multiple adjacent rooms to satisfy groups.
 
         domains[user.UserID] = candidate_rooms
 

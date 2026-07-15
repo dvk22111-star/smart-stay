@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from ortools.sat.python import cp_model
 
@@ -47,3 +47,7 @@ class AssignmentContext:
 
     # הנופש הנוכחי
     vacation: object
+
+    # אינדיקטורים לשימוש בחדרים
+    room_used: dict = field(default_factory=dict)
+    room_full: dict = field(default_factory=dict)

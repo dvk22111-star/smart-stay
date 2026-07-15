@@ -23,6 +23,7 @@ def export_to_excel(
     group_members,
     customer_preferences,
     room_preferences,
+    partner_requests=None,
     filename_prefix="solution"
 ):
     """
@@ -35,6 +36,7 @@ def export_to_excel(
         group_members,
         customer_preferences,
         room_preferences,
+        partner_requests or [],
     )
 
     result = {}

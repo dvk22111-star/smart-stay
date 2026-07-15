@@ -23,17 +23,26 @@ class Stage2PropagationService:
             context.room_preferences
         )
 
+        # 0️⃣ partner_requests אינם Hard constraints.
+        # הבדיקות כאן מתמקדות רק ב-Hard constraints אמיתיים כגון דומיינים חוקיים
+        # והקצאת חדרים תקינה. בקשות שותפים יטופלו באובייקטיבית בלבד.
+
         # 2️⃣ יצירת מפת קיבולת חדרים
         room_capacities = {
             room.RoomID: room.NumberOfBeds
             for room in context.rooms
         }
 
+        # שמירת דומיינים לקראת דוחות או ניתוח רכיבים נוספים
+        context.user_constraints = user_constraints
+
         # 3️⃣ החלת האילוצים במודל CP-SAT
         self._constraints_builder.apply(
             model=context.model,
             variables=context.variables,
             assigned_users=context.assigned_users,
+            room_used_flags=context.room_used,
+            room_full_flags=context.room_full,
             users=context.users,
             rooms=context.rooms,
             room_capacities=room_capacities,

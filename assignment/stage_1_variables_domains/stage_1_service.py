@@ -40,6 +40,7 @@ class Stage1VariablesAndDomainsService:
         model = cp_model.CpModel()
         variables = self._variables_builder.build(model, users, rooms)
         assigned_users = self._variables_builder.build_assigned_users(model, users)
+        room_used, room_full = self._variables_builder.build_room_usage_flags(model, rooms)
 
         # 4️⃣ החזרת AssignmentContext מלא
         return AssignmentContext(
@@ -48,6 +49,8 @@ class Stage1VariablesAndDomainsService:
             rooms=rooms,
             variables=variables,
             assigned_users=assigned_users,
+            room_used=room_used,
+            room_full=room_full,
             customer_preferences=customer_preferences,
             room_preferences=room_preferences,
             hotel_preferences=hotel_preferences,

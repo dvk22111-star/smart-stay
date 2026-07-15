@@ -154,7 +154,25 @@ CREATE TABLE partner_requests (
     FOREIGN KEY (UserIDMember2) REFERENCES users(UserID),
     FOREIGN KEY (VacationID) REFERENCES vacations(VacationID)
 );
-select * from hotels
+
+
+SELECT name, state_desc
+FROM sys.databases
+WHERE name = 'smart_stay';
+
+SELECT name, physical_name
+FROM sys.master_files
+WHERE database_id = DB_ID('smart_stay');
+
+SELECT name, state_desc
+FROM sys.databases
+WHERE name = 'smart_stay';
+
+USE smart_stay;
+GO
+
+SELECT TABLE_NAME
+FROM INFORMATION_SCHEMA.TABLES;
 
 
 -------------

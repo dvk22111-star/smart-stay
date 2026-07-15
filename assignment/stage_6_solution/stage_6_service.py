@@ -54,6 +54,7 @@ def run_stage_6(
         group_members=context.group_members,
         customer_preferences=context.customer_preferences,
         room_preferences=context.room_preferences,
+        partner_requests=context.partner_requests,
         filename_prefix=f"vacation_{vacation_id}"
     )
 
